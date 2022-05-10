@@ -1,6 +1,6 @@
 <?php
 
-namespace AntoTG;
+namespace AntoTG\SiweLaravel;
 
 use Carbon\Carbon;
 use Elliptic\EC;
