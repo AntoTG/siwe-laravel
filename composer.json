@@ -9,6 +9,11 @@
     "simplito/elliptic-php": "1.0",
     "symfony/polyfill-mbstring": "1.25.0"
   },
+  "autoload": {
+    "psr-4": {
+      "antotg\\siwe-laravel\\": "src/"
+    }
+  },
   "config": {
     "sort-packages": true
   },
