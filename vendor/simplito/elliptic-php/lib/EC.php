@@ -19,6 +19,7 @@ class EC
     {
         if( is_string($options) )
         {
+            //assert('Curves::hasCurve($options)'); //, "Unknown curve " . $options);
             $options = Curves::getCurve($options);
         }
 
@@ -136,17 +137,7 @@ class EC
             if( $k->cmpn(1) <= 0 || $k->cmp($ns1) >= 0 )
                 continue;
 
-            // Fix the bit-length of the random nonce,
-            // so that it doesn't leak via timing.
-            // This does not change that ks = k mod k
-            $ks = $k->add($this->n);
-            $kt = $ks->add($this->n);
-            if ($ks->bitLength() === $this->n->bitLength()) {
-                $kp = $this->g->mul($kt);
-            } else {
-                $kp = $this->g->mul($ks);
-            }
-
+            $kp = $this->g->mul($k);
             if( $kp->isInfinity() )
                 continue;
 
@@ -221,7 +212,7 @@ class EC
 
     public function recoverPubKey($msg, $signature, $j, $enc = false)
     {
-        assert((3 & $j) === $j); //, "The recovery param is more than two bits");
+        assert('(3 & $j) === $j'); //, "The recovery param is more than two bits");
         $signature = new Signature($signature, $enc);
 
         $e = new BN($msg, 16);
@@ -261,14 +252,14 @@ class EC
             try {
                 $Qprime = $this->recoverPubKey($e, $signature, $i);
             }
-            catch(\Exception $e) {
+            catch(Exception $e) {
                 continue;
             }
 
             if( $Qprime->eq($Q))
                 return $i;
         }
-        throw new \Exception("Unable to find valid recovery factor");
+        throw new Exception("Unable to find valid recovery factor");
     }
 }
 

@@ -21,7 +21,7 @@ class Signature
         }
         
         if (isset($options['r'])) {
-            assert(isset($options["r"]) && isset($options["s"])); //, "Signature without r or s");
+            assert('isset($options["r"]) && isset($options["s"])'); //, "Signature without r or s");
             $this->r = new BN($options["r"], 16);
             $this->s = new BN($options["s"], 16);
 
@@ -33,7 +33,7 @@ class Signature
         }
 
         if (!$this->_importDER($options, $enc))
-            throw new \Exception('Unknown signature format');
+            throw new Exception('Unknown signature format');
 
     }
 
@@ -118,7 +118,7 @@ class Signature
         $octets = 1 + (log($len) / M_LN2 >> 3);
         array_push($arr, $octets | 0x80);
         while(--$octets)
-            array_push($arr, ($len >> ($octets << 3)) & 0xff);
+            array_push(($len >> ($octets << 3)) & 0xff);
         array_push($arr, $len);
     }
 

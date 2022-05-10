@@ -5,12 +5,6 @@ use BN\BN;
 
 class Point extends \Elliptic\Curve\BaseCurve\Point
 {
-    public $x;
-    public $y;
-    public $z;
-    public $t;
-    public $zOne;
-    
     function __construct($curve, $x = null, $y = null, $z = null, $t = null) {
         parent::__construct($curve, 'projective');
         if ($x == null && $y == null && $z == null) {
@@ -112,6 +106,9 @@ class Point extends \Elliptic\Curve\BaseCurve\Point
         // D = Y1^2
         $d = $this->y->redSqr();
 
+        $nx;
+        $ny;
+        $nz;
         if ($this->curve->twisted) {
             // E = a * C
             $e = $this->curve->_mulA($c);
@@ -219,6 +216,8 @@ class Point extends \Elliptic\Curve\BaseCurve\Point
         // X3 = A * F * ((X1 + Y1) * (X2 + Y2) - C - D)
         $tmp = $this->x->redAdd($this->y)->redMul($p->x->redAdd($p->y))->redISub($c)->redISub($d);
         $nx = $a->redMul($f)->redMul($tmp);
+        $ny;
+        $nz;
         if ($this->curve->twisted) {
             // Y3 = A * G * (D - a * C)
             $ny = $a->redMul($g)->redMul($d->redSub($this->curve->_mulA($c)));

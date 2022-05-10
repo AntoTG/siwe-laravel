@@ -3,17 +3,22 @@ namespace BN;
 
 use \JsonSerializable;
 use \Exception;
-use \BI\BigInteger;
+
+if (version_compare(PHP_VERSION, "5.6") >= 0) {
+    eval('function is_gmp($x) { return $x instanceof GMP; }');
+} else {
+    function is_gmp($x) { return is_resource($x); }
+}
 
 class BN implements JsonSerializable
 {
-    public $bi;
+    public $gmp;
     public $red;
 
     function __construct($number, $base = 10, $endian = null)
     {
         if( $number instanceof BN ) {
-            $this->bi = $number->bi;
+            $this->gmp = $number->gmp;
             $this->red = $number->red;
             return;
         }
@@ -21,8 +26,8 @@ class BN implements JsonSerializable
         // Reduction context
         $this->red = null;
 
-        if ( $number instanceof BigInteger ) {
-            $this->bi = $number;
+        if ( is_gmp($number) ) {
+            $this->gmp = $number;
             return;
         }
 
@@ -42,11 +47,11 @@ class BN implements JsonSerializable
             $number = bin2hex(strrev(hex2bin($number)));
         }
 
-        $this->bi = new BigInteger($number, $base);
+        $this->gmp = gmp_init($number, $base);
     }
 
     public function negative() {
-        return $this->bi->sign() < 0 ? 1 : 0;
+        return gmp_sign($this->gmp) < 0 ? 1 : 0;
     }
 
     public static function isBN($num) {
@@ -63,7 +68,7 @@ class BN implements JsonSerializable
 
     public function copy($dest)
     {
-        $dest->bi = $this->bi;
+        $dest->gmp = $this->gmp;
         $dest->red = $this->red;
     }
 
@@ -75,7 +80,7 @@ class BN implements JsonSerializable
     {
         if( $base == "hex" )
             $base = 16;
-        $str = $this->bi->abs()->toString($base);
+        $str = gmp_strval(gmp_abs($this->gmp), $base);
         if ($padding > 0) {
             $len = strlen($str);
             $mod = $len % $padding;
@@ -89,7 +94,7 @@ class BN implements JsonSerializable
     }
 
     public function toNumber() {
-        return $this->bi->toNumber();
+        return gmp_intval($this->gmp);
     }
 
     public function jsonSerialize() {
@@ -132,7 +137,7 @@ class BN implements JsonSerializable
     }
 
     public function zeroBits() {
-        return $this->bi->scan1(0);
+        return gmp_scan1($this->gmp, 0);
     }
 
     public function byteLength() {
@@ -151,18 +156,18 @@ class BN implements JsonSerializable
     }
 
     public function ineg() {
-        $this->bi = $this->bi->neg();
+        $this->gmp = gmp_neg($this->gmp);
         return $this;
     }
 
     // Or `num` with `this` in-place
     public function iuor(BN $num) {
-        $this->bi = $this->bi->binaryOr($num->bi);
+        $this->gmp = gmp_or($this->gmp, $num->gmp);
         return $this;
     }
 
     public function ior(BN $num) {
-        if (assert_options(ASSERT_ACTIVE)) assert(!$this->negative() && !$num->negative());
+        assert('!$this->negative() && !num->negative()');
         return $this->iuor($num);
     }
 
@@ -181,12 +186,12 @@ class BN implements JsonSerializable
 
     // And `num` with `this` in-place
     public function iuand(BN $num) {
-        $this->bi = $this->bi->binaryAnd($num->bi);
+        $this->gmp = gmp_and($this->gmp, $num->gmp);
         return $this;
     }
 
     public function iand(BN $num) {
-        if (assert_options(ASSERT_ACTIVE)) assert(!$this->negative() && !$num->negative());
+        assert('!$this->negative() && !num->negative()');
         return $this->iuand($num);
     }
 
@@ -205,12 +210,12 @@ class BN implements JsonSerializable
 
     // Xor `num` with `this` in-place
     public function iuxor(BN $num) {
-        $this->bi = $this->bi->binaryXor($num->bi);
+        $this->gmp = gmp_xor($this->gmp, $num->gmp);
         return $this;
     }
 
     public function ixor(BN $num) {
-        if (assert_options(ASSERT_ACTIVE)) assert(!$this->negative() && !$num->negative());
+        assert('!$this->negative() && !num->negative()');
         return $this->iuxor($num);
     }
 
@@ -230,7 +235,7 @@ class BN implements JsonSerializable
     // Not ``this`` with ``width`` bitwidth
     public function inotn($width)
     {
-        assert(is_integer($width) && $width >= 0);
+        assert('is_integer($width) && $width >= 0');
         $neg = false;
         if( $this->isNeg() )
         {
@@ -239,7 +244,7 @@ class BN implements JsonSerializable
         }
 
         for($i = 0; $i < $width; $i++)
-            $this->bi = $this->bi->setbit($i, !$this->bi->testbit($i));
+            $this->gmp = gmp_setbit($this->gmp, $i, !gmp_testbit($this->gmp, $i));
 
         return $neg ? $this->negi() : $this;
     }
@@ -250,14 +255,14 @@ class BN implements JsonSerializable
 
     // Set `bit` of `this`
     public function setn($bit, $val) {
-        assert(is_integer($bit) && $bit > 0);
-        $this->bi = $this->bi->setbit($bit, !!$val);
+        assert('is_integer($bit) && $bit > 0');
+        $this->gmp = gmp_setbit($this->gmp, $bit, !!$val);
         return $this;
     }
 
     // Add `num` to `this` in-place
     public function iadd(BN $num) {
-        $this->bi = $this->bi->add($num->bi);
+        $this->gmp = gmp_add($this->gmp, $num->gmp);
         return $this;
     }
 
@@ -268,7 +273,7 @@ class BN implements JsonSerializable
 
     // Subtract `num` from `this` in-place
     public function isub(BN $num) {
-        $this->bi = $this->bi->sub($num->bi);
+        $this->gmp = gmp_sub($this->gmp, $num->gmp);
         return $this;
     }
 
@@ -284,15 +289,15 @@ class BN implements JsonSerializable
 
     // In-place Multiplication
     public function imul(BN $num) {
-        $this->bi = $this->bi->mul($num->bi);
+        $this->gmp = gmp_mul($this->gmp, $num->gmp);
         return $this;
     }
 
     public function imuln($num)
     {
-        assert(is_numeric($num));
+        assert('is_numeric($num)');
         $int = intval($num);
-        $res = $this->bi->mul($int);
+        $res = gmp_mul($this->gmp, $int);
 
         if( ($num - $int) > 0 )
         {
@@ -306,12 +311,12 @@ class BN implements JsonSerializable
                 $int = intval($frac);
             }
 
-            $tmp = $this->bi->mul($int);
-            $tmp = $tmp->div($mul);
-            $res = $res->add($tmp);
+            $tmp = gmp_mul($this->gmp, $int);
+            $tmp = gmp_div($tmp, $mul);
+            $res = gmp_add($res, $tmp);
         }
 
-        $this->bi = $res;
+        $this->gmp = $res;
         return $this;
     }
 
@@ -332,23 +337,23 @@ class BN implements JsonSerializable
     // Math.pow(`this`, `num`)
     public function pow(BN $num) {
         $res = clone($this);
-        $res->bi = $res->bi->pow($num->bi);
+        $res->gmp = gmp_pow($res->gmp, $num->gmp);
         return $res;
     }
 
     // Shift-left in-place
     public function iushln($bits) {
-        assert(is_integer($bits) && $bits >= 0);
+        assert('is_integer($bits) && $bits >= 0');
         if ($bits < 54) {
-            $this->bi = $this->bi->mul(1 << $bits);
+            $this->gmp = gmp_mul($this->gmp, 1 << $bits);
         } else {
-            $this->bi = $this->bi->mul((new BigInteger(2))->pow($bits));
+            $this->gmp = gmp_mul($this->gmp, gmp_pow(2, $bits));
         }
         return $this;
     }
 
     public function ishln($bits) {
-        if (assert_options(ASSERT_ACTIVE)) assert(!$this->negative());
+        assert('!$this->negate()');
         return $this->iushln($bits);
     }
 
@@ -359,21 +364,21 @@ class BN implements JsonSerializable
         if( $hint != 0 )
             throw new Exception("Not implemented");
 
-        assert(is_integer($bits) && $bits >= 0);
+        assert('is_integer($bits) && $bits >= 0');
 
         if( $extended != null )
             $extended = $this->maskn($bits);
                
         if ($bits < 54) {
-            $this->bi = $this->bi->div(1 << $bits);
+            $this->gmp = gmp_div($this->gmp, 1 << $bits);
         } else {
-            $this->bi = $this->bi->div((new BigInteger(2))->pow($bits));
+            $this->gmp = gmp_div($this->gmp, gmp_pow(2, $bits));
         }
         return $this;
     }
 
     public function ishrn($bits, $hint = null, $extended = null) {
-        if (assert_options(ASSERT_ACTIVE)) assert(!$this->negative());
+        assert('!$this->negative()');
         return $this->iushrn($bits, $hint, $extended);
     }
 
@@ -397,14 +402,14 @@ class BN implements JsonSerializable
 
     // Test if n bit is set
     public function testn($bit) {
-        assert(is_integer($bit) && $bit >= 0);
-        return $this->bi->testbit($bit);
+        assert('is_integer($bit) && $bit >= 0');
+        return gmp_testbit($this->gmp, $bit);
     }
 
     // Return only lowers bits of number (in-place)
     public function imaskn($bits) {
-        assert(is_integer($bits) && $bits >= 0);
-        if (assert_options(ASSERT_ACTIVE)) assert(!$this->negative());
+        assert('is_integer($bits) && $bits >= 0');
+        assert('!$this->negative()');
         $mask = "";
         for($i = 0; $i < $bits; $i++)
             $mask .= "1";
@@ -418,15 +423,15 @@ class BN implements JsonSerializable
 
     // Add plain number `num` to `this`
     public function iaddn($num) {
-        assert(is_numeric($num));
-        $this->bi = $this->bi->add(intval($num));
+        assert('is_numeric($num)');
+        $this->gmp = gmp_add($this->gmp, intval($num));
         return $this;
     }
 
     // Subtract plain number `num` from `this`
     public function isubn($num) {
-        assert(is_numeric($num));
-        $this->bi = $this->bi->sub(intval($num));
+        assert('is_numeric($num)');
+        $this->gmp = gmp_sub($this->gmp, intval($num));
         return $this;
     }
 
@@ -439,98 +444,98 @@ class BN implements JsonSerializable
     }
 
     public function iabs() {
-        if ($this->bi->sign() < 0) {
-            $this->bi = $this->bi->abs();
+        if (gmp_sign($this->gmp) < 0) {
+            $this->gmp = gmp_abs($this->gmp);
         }
         return $this;
     }
 
     public function abs() {
         $res = clone($this);
-        if ($res->bi->sign() < 0) 
-            $res->bi = $res->bi->abs();
+        if (gmp_sign($res->gmp) < 0) 
+            $res->gmp = gmp_abs($res->gmp);
         return $res;
     }
 
     // Find `this` / `num`
     public function div(BN $num) {
-        if (assert_options(ASSERT_ACTIVE)) assert(!$num->isZero());
+        assert('!$num->isZero()');
         $res = clone($this);
-        $res->bi = $res->bi->div($num->bi);
+        $res->gmp = gmp_div($res->gmp, $num->gmp);
         return $res;
     }
 
     // Find `this` % `num`
     public function mod(BN $num) {
-        if (assert_options(ASSERT_ACTIVE)) assert(!$num->isZero());
+        assert('!$num->isZero()');
         $res = clone($this);
-        $res->bi = $res->bi->divR($num->bi);
+        $res->gmp = gmp_div_r($res->gmp, $num->gmp);
         return $res;
     }
 
     public function umod(BN $num) {
-        if (assert_options(ASSERT_ACTIVE)) assert(!$num->isZero());
-        $tmp = $num->bi->sign() < 0 ? $num->bi->abs() : $num->bi;        
+        assert('!$num->isZero()');
+        $gmp = gmp_sign($num->gmp) < 0 ? gmp_abs($num->gmp) : $num->gmp;        
         $res = clone($this);
-        $res->bi = $this->bi->mod($tmp);
+        $res->gmp = gmp_mod($this->gmp, $gmp);
         return $res;
     }
 
     // Find Round(`this` / `num`)
     public function divRound(BN $num)
     {
-        if (assert_options(ASSERT_ACTIVE)) assert(!$num->isZero());
+        assert('!$num->isZero()');
 
         $negative = $this->negative() !== $num->negative();
 
         $res = $this->_clone()->abs();
-        $arr = $res->bi->divQR($num->bi->abs());
-        $res->bi = $arr[0];
-        $tmp = $num->bi->sub($arr[1]->mul(2));
-        if( $tmp->cmp(0) <= 0 && (!$negative || $this->negative() === 0) )
+        $arr = gmp_div_qr($res->gmp, gmp_abs($num->gmp));
+        $res->gmp = $arr[0];
+        $tmp = gmp_sub($num->gmp, gmp_mul($arr[1], 2));
+        if( gmp_cmp($tmp, 0) <= 0 && (!$negative || $this->negative() === 0) )
             $res->iaddn(1);
         return $negative ? $res->negi() : $res;
     }
 
     public function modn($num) {
-        assert(is_numeric($num) && $num != 0);
-        return $this->bi->divR(intval($num))->toNumber();
+        assert('is_numeric($num) && $num != 0');
+        return gmp_intval( gmp_div_r($this->gmp, intval($num)) );
     }
 
     // In-place division by number
     public function idivn($num) {
-        assert(is_numeric($num) && $num != 0);
-        $this->bi = $this->bi->div(intval($num));
+        assert('is_numeric($num) && $num != 0');
+        $this->gmp = gmp_div($this->gmp, intval($num));
         return $this;
     }
 
     public function divn($num) {
-        return $this->_clone()->idivn($num);
+        return $this->_clone()->idivn();
     }
 
     public function gcd(BN $num) {
         $res = clone($this);
-        $res->bi = $this->bi->gcd($num->bi);
+        $res->gmp = gmp_gcd($this->gmp, $num->gmp);
         return $res;
     }
 
     public function invm(BN $num) {
         $res = clone($this);
-        $res->bi = $res->bi->modInverse($num->bi);
+        $res->gmp = gmp_invert($res->gmp, $num->gmp);
         return $res;
     }
 
     public function isEven() {
-        return !$this->bi->testbit(0);
+        return !gmp_testbit($this->gmp, 0);
     }
 
     public function isOdd() {
-        return $this->bi->testbit(0);
+        return gmp_testbit($this->gmp, 0);
     }
 
     public function andln($num) {
-        assert(is_numeric($num));
-        return $this->bi->binaryAnd($num)->toNumber();
+        assert('is_numeric($num)');
+        return gmp_intval(gmp_and($this->gmp, $num));
     }
 
     public function bincn($num) {
@@ -539,12 +544,12 @@ class BN implements JsonSerializable
     }
 
     public function isZero() {
-        return $this->bi->sign() == 0;
+        return gmp_sign($this->gmp) == 0;
     }
 
     public function cmpn($num) {
-        assert(is_numeric($num));
-        return $this->bi->cmp($num);
+        assert('is_numeric($num)');
+        return gmp_cmp($this->gmp, $num);
     }
 
     // Compare two numbers and return:
@@ -552,11 +557,11 @@ class BN implements JsonSerializable
     // 0 - if `this` == `num`
     // -1 - if `this` < `num`
     public function cmp(BN $num) {
-        return $this->bi->cmp($num->bi);
+        return gmp_cmp($this->gmp, $num->gmp);
     }
 
     public function ucmp(BN $num) {
-        return $this->bi->abs()->cmp($num->bi->abs());
+        return gmp_cmp(gmp_abs($this->gmp), gmp_abs($num->gmp));
     }
 
     public function gtn($num) {
@@ -629,9 +634,9 @@ class BN implements JsonSerializable
             throw new Exception("redAdd works only with red numbers");
 
         $res = clone($this);
-        $res->bi = $res->bi->add($num->bi);
-        if ($res->bi->cmp($this->red->m->bi) >= 0)
-            $res->bi = $res->bi->sub($this->red->m->bi);
+        $res->gmp = gmp_add($res->gmp, $num->gmp);
+        if (gmp_cmp($res->gmp, $this->red->m->gmp) >= 0)
+            $res->gmp = gmp_sub($res->gmp, $this->red->m->gmp);
         return $res;
         // return $this->red->add($this, $num);
     }
@@ -640,9 +645,9 @@ class BN implements JsonSerializable
         if( $this->red === null )
             throw new Exception("redIAdd works only with red numbers");
         $res = $this;
-        $res->bi = $res->bi->add($num->bi);
-        if ($res->bi->cmp($this->red->m->bi) >= 0)
-            $res->bi = $res->bi->sub($this->red->m->bi);
+        $res->gmp = gmp_add($res->gmp, $num->gmp);
+        if (gmp_cmp($res->gmp, $this->red->m->gmp) >= 0)
+            $res->gmp = gmp_sub($res->gmp, $this->red->m->gmp);
         return $res;
         //return $this->red->iadd($this, $num);
     }
@@ -651,9 +656,9 @@ class BN implements JsonSerializable
         if( $this->red === null )
             throw new Exception("redSub works only with red numbers");
         $res = clone($this);
-        $res->bi = $this->bi->sub($num->bi);
-        if ($res->bi->sign() < 0)
-            $res->bi = $res->bi->add($this->red->m->bi);
+        $res->gmp = gmp_sub($this->gmp, $num->gmp);
+        if (gmp_sign($res->gmp) < 0)
+            $res->gmp = gmp_add($res->gmp, $this->red->m->gmp);
         return $res;
         //return $this->red->sub($this, $num);
     }
@@ -661,9 +666,9 @@ class BN implements JsonSerializable
     public function redISub(BN $num) {
         if( $this->red === null )
             throw new Exception("redISub works only with red numbers");
-        $this->bi = $this->bi->sub($num->bi);
-        if ($this->bi->sign() < 0)
-            $this->bi = $this->bi->add($this->red->m->bi);
+        $this->gmp = gmp_sub($this->gmp, $num->gmp);
+        if (gmp_sign($this->gmp) < 0)
+            $this->gmp = gmp_add($this->gmp, $this->red->m->gmp);
         return $this;
             
 //        return $this->red->isub($this, $num);
@@ -679,7 +684,7 @@ class BN implements JsonSerializable
         if( $this->red === null )
             throw new Exception("redMul works only with red numbers");
         $res = clone($this);
-        $res->bi = $this->bi->mul($num->bi)->mod($this->red->m->bi);
+        $res->gmp = gmp_mod( gmp_mul($this->gmp, $num->gmp), $this->red->m->gmp );
         return $res;            
         /*
         return $this->red->mul($this, $num);
@@ -689,7 +694,7 @@ class BN implements JsonSerializable
     public function redIMul(BN $num) {
         if( $this->red === null )
             throw new Exception("redIMul works only with red numbers");
-        $this->bi = $this->bi->mul($num->bi)->mod($this->red->m->bi);
+        $this->gmp = gmp_mod( gmp_mul($this->gmp, $num->gmp), $this->red->m->gmp );
         return $this;
         //return $this->red->imul($this, $num);
     }
@@ -698,7 +703,7 @@ class BN implements JsonSerializable
         if( $this->red === null )
             throw new Exception("redSqr works only with red numbers");
         $res = clone($this);
-        $res->bi = $this->bi->mul($this->bi)->mod($this->red->m->bi);
+        $res->gmp = gmp_mod( gmp_mul( $this->gmp, $this->gmp ), $this->red->m->gmp );
         return $res;
         /*
         $this->red->verify1($this);
@@ -710,7 +715,7 @@ class BN implements JsonSerializable
         if( $this->red === null )
             throw new Exception("redISqr works only with red numbers");
         $res = $this;
-        $res->bi = $this->bi->mul($this->bi)->mod($this->red->m->bi);
+        $res->gmp = gmp_mod( gmp_mul( $this->gmp, $this->gmp ), $this->red->m->gmp );
         return $res;
 /*        $this->red->verify1($this);
         return $this->red->isqr($this);
@@ -763,3 +768,5 @@ class BN implements JsonSerializable
         }
     }
 }
+
+?>

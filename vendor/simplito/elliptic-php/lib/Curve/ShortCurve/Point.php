@@ -143,7 +143,7 @@ class Point extends \Elliptic\Curve\BaseCurve\Point implements JsonSerializable
         {
             $tmp = array_map($obj2point, $pre["naf"]["points"]);
             array_unshift($tmp, $point);
-            $point->precomputed["naf"] = array(
+            $points->precomputed["naf"] = array(
                 "wnd" => $pre["naf"]["wnd"],
                 "points" => $tmp
             );

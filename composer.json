@@ -1,21 +1,17 @@
 {
-    "name": "artpi/dao-login",
-    "description": "Make your site web3-ready: Log in with Ethereum or create users based on governance tokens.",
-    "require-dev": {
-      "squizlabs/php_codesniffer": "^3.4.0",
-      "wp-coding-standards/wpcs": "^1.2.1"
-    },
-    "scripts": {
-      "lint": [
-        "phpcs --standard=phpcs.xml ./"
-      ],
-      "phpcbf": [
-        "phpcbf --standard=phpcs.xml ./"
-      ]
-    },
-    "require": {
-        "kornrunner/keccak": "^1.1",
-        "simplito/elliptic-php": "^1.0",
-        "symfony/polyfill-mbstring": "1.20"
-    }
+  "name": "antotg/siwe-laravel",
+  "description": "Make your site web3-ready: Log in with Ethereum.",
+  "license": "GPL-2.0-or-later",
+  "require": {
+    "php": "^8.0.0",
+    "kornrunner/keccak": "1.1",
+    "nesbot/carbon": "^2.58",
+    "simplito/elliptic-php": "1.0",
+    "symfony/polyfill-mbstring": "1.20"
+  },
+  "config": {
+    "sort-packages": true
+  },
+  "prefer-stable": true,
+  "minimum-stability": "dev"
 }

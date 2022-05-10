@@ -3,7 +3,6 @@
 namespace BN;
 
 use \Exception;
-use \BI\BigInteger;
 
 class Red
 {
@@ -38,14 +37,14 @@ class Red
 
     public function verify1(BN $num)
     {        
-        if (assert_options(ASSERT_ACTIVE)) assert(!$num->negative()); //,"red works only with positives");
-        assert($num->red); //, "red works only with red numbers");
+        assert('!$num->negative()'); //,"red works only with positives");
+        assert('$num->red'); //, "red works only with red numbers");
     }
 
     public function verify2(BN $a, BN $b)
     {
-        if (assert_options(ASSERT_ACTIVE)) assert(!$a->negative() && !$b->negative()); //, "red works only with positives");
-        assert($a->red && ($a->red == $b->red)); //, "red works only with red numbers");
+        assert('!$a->negative() && !$b->negative()'); //, "red works only with positives");
+        assert('$a->red && ($a->red == $b->red)'); //, "red works only with red numbers");
     }
 
     public function imod(BN &$a) {
@@ -133,7 +132,7 @@ class Red
             return $a->_clone();
 
         $mod3 = $this->m->andln(3);
-        assert($mod3 % 2 == 1);
+        assert('$mod3 % 2 == 1');
 
         // Fast case
         if ($mod3 == 3) {
@@ -150,7 +149,7 @@ class Red
             $s++;
             $q->iushrn(1);
         }
-        if (assert_options(ASSERT_ACTIVE)) assert(!$q->isZero());
+        assert('!$q->isZero()');
 
         $one = (new BN(1))->toRed($this);
         $nOne = $one->redNeg();
@@ -181,7 +180,7 @@ class Red
                 $b = $this->pow($c, (new BN(1))->iushln($m - $i - 1));
             } else {
                 $b = clone($c);
-                $b->bi = $c->bi->powMod(1 << ($m - $i - 1), $this->m->bi);
+                $b->gmp = gmp_powm($c->gmp, 1 << ($m - $i - 1), $this->m->gmp);
             }
 
             $r = $r->redMul($b);
@@ -200,7 +199,7 @@ class Red
 
     public function pow(BN $a, BN $num) {
         $r = clone($a);
-        $r->bi = $a->bi->powMod($num->bi, $this->m->bi);
+        $r->gmp = gmp_powm($a->gmp, $num->gmp, $this->m->gmp);
         return $r;        
     }
 

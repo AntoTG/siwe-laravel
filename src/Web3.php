@@ -1,16 +1,13 @@
 <?php
-namespace Artpi\WPDAO;
 
+namespace AntoTG\Web3;
+
+use Carbon\Carbon;
 use Elliptic\EC;
 use kornrunner\Keccak;
-use WP_Error;
+use Illuminate\Support\Str;
 
 class Web3 {
-	private $settings;
-
-	public function __construct( $settings ) {
-		$this->settings = $settings;
-	}
 
 	private function hash2number( $hex ) {
 		$hex = substr( $hex, 2 ); // to strip 0x;
@@ -22,6 +19,7 @@ class Web3 {
 		return $ret / pow( 10, 18 ); // Because numbers are in Wei (10^-18)
 	}
 
+    /*
 	public function api( $data = [] ) {
 		$data = array_merge(
 			array(
@@ -58,41 +56,38 @@ class Web3 {
 		}
 		return $balances;
 	}
+    */
 
-	public static function generate_message( $request ) {
-		$nonce     = wp_create_nonce( 'eth_login' );
-		$uri       = get_site_url();
-		$domain    = parse_url( $uri, PHP_URL_HOST );
-		$statement = esc_attr__( 'Log In with your Ethereum wallet', 'dao-login' ); // TBD
+	public static function generateMessage($address, $nonce, $uri, $statement) {
+		$domain    = parse_url($uri, PHP_URL_HOST);
 		$version   = 1; // Per https://github.com/ethereum/EIPs/blob/9a9c5d0abdaf5ce5c5dd6dc88c6d8db1b130e95b/EIPS/eip-4361.md#example-message-to-be-signed
-		$issued_at = gmdate( 'Y-m-d\TH:i:s\Z' );
+		$issued_at = Carbon::now()->format('Y-m-d\TH:i:s\Z');
 
 		// This is copy-pasted from https://github.com/ethereum/EIPs/blob/9a9c5d0abdaf5ce5c5dd6dc88c6d8db1b130e95b/EIPS/eip-4361.md#informal-message-template
 		$message = "{$domain} wants you to sign in with your Ethereum account:
-	{$request['address']}
-	
+	{$address}
+
 	{$statement}
-	
+
 	URI: {$uri}
 	Version: {$version}
 	Nonce: {$nonce}
 	Issued At: {$issued_at}
 	";
-		// This attempt will auto expire in 5 minutes. This way, we'll save the message server-side to check after the login attempt.
-		set_transient( 'wp_dao_message_' . $request['address'], $message, 60 * 5 );
-		return array(
-			'address' => $request['address'],
+
+		return [
+			'address' => $address,
 			'message' => $message,
 			'nonce'   => $nonce,
-		);
+        ];
+
 	}
 
 	/**
 	 * This will verify Ethereum signed message according to the specification.
 	 * From https://github.com/simplito/elliptic-php#verifying-ethereum-signature
 	 */
-	public static function verify_signature( $message, $signature, $address ) {
-		require_once __DIR__ . '/vendor/autoload.php';
+	public static function verify_signature($message, $signature, $address) {
 		$msglen = strlen( $message );
 		$hash   = Keccak::hash( "\x19Ethereum Signed Message:\n{$msglen}{$message}", 256 );
 		$sign   = [
@@ -104,7 +99,7 @@ class Web3 {
 			return false;
 		}
 
-		$ec     = new EC( 'secp256k1' );
+		$ec     = new EC('secp256k1');
 		$pubkey = $ec->recoverPubKey( $hash, $sign, $recid );
 
 		return $address == self::pub_key_address( $pubkey );
@@ -113,4 +108,5 @@ class Web3 {
 	public static function pub_key_address( $pubkey ) {
 		return '0x' . substr( Keccak::hash( substr( hex2bin( $pubkey->encode( 'hex' ) ), 1 ), 256 ), 24 );
 	}
+
 }

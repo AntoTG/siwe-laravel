@@ -2,12 +2,13 @@
 namespace Elliptic\EdDSA;
 
 use Elliptic\Utils;
+use Elliptic\EdDSA;
+
 
 class KeyPair {
     public $eddsa;
-    public $_pubBytes;
 /**
-* @param {\Elliptic\EdDSA} eddsa - instance
+* @param {EdDSA} eddsa - instance
 * @param {Object} params - public/private key parameters
 *
 * @param {Array<Byte>} [params.secret] - secret seed bytes
@@ -107,7 +108,7 @@ class KeyPair {
     }
 
     public function sign($message) {
-        assert($this->_secret); //, 'KeyPair can only verify');
+        assert('$this->_secret'); //, 'KeyPair can only verify');
         return $this->eddsa->sign($message, $this);
     }
 
@@ -116,7 +117,7 @@ class KeyPair {
     }
 
     public function getSecret($enc = false) {
-        assert($this->_secret); //, 'KeyPair is public only');
+        assert('$this->_secret'); //, 'KeyPair is public only');
         return Utils::encode($this->secret(), $enc);
     }
 

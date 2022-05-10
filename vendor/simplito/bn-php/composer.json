@@ -5,12 +5,11 @@
     "authors": [
         {
             "name": "Simplito Team",
-            "email": "s.smyczynski@simplito.com",
-            "homepage": "https://simplito.com"
+            "email": "s.smyczynski@simplito.com"
         }
     ],
     "require": {
-        "simplito/bigint-wrapper-php": "~1.0.0"
+        "ext-gmp": "*"
     },
     "require-dev": {
         "phpunit/phpunit": "*"

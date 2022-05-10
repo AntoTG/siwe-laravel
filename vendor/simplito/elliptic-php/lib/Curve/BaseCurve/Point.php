@@ -3,6 +3,7 @@
 namespace Elliptic\Curve\BaseCurve;
 
 use Elliptic\Utils;
+use BN\BN;
 
 abstract class Point
 {

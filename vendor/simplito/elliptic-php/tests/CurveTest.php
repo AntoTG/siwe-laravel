@@ -3,7 +3,7 @@ require_once __DIR__ . "/../vendor/autoload.php";
 
 use BN\BN;
 
-class CurveTest extends \PHPUnit\Framework\TestCase {
+class CurveTest extends PHPUnit_Framework_TestCase {
     public function test_should_work_with_example_curve() {
         $curve = new \Elliptic\Curve\ShortCurve(array(
             "p" => '1d',

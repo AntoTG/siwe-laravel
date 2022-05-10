@@ -7,8 +7,11 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'kornrunner\\' => array($vendorDir . '/kornrunner/keccak/src'),
+    'Symfony\\Polyfill\\Php80\\' => array($vendorDir . '/symfony/polyfill-php80'),
     'Symfony\\Polyfill\\Mbstring\\' => array($vendorDir . '/symfony/polyfill-mbstring'),
+    'Symfony\\Contracts\\Translation\\' => array($vendorDir . '/symfony/translation-contracts'),
+    'Symfony\\Component\\Translation\\' => array($vendorDir . '/symfony/translation'),
     'Elliptic\\' => array($vendorDir . '/simplito/elliptic-php/lib'),
+    'Carbon\\' => array($vendorDir . '/nesbot/carbon/src/Carbon'),
     'BN\\' => array($vendorDir . '/simplito/bn-php/lib'),
-    'BI\\' => array($vendorDir . '/simplito/bigint-wrapper-php/lib'),
 );
