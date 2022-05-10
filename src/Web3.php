@@ -1,6 +1,6 @@
 <?php
 
-namespace AntoTG\Web3;
+namespace AntoTG;
 
 use Carbon\Carbon;
 use Elliptic\EC;
@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 
 class Web3 {
 
-	private function hash2number( $hex ) {
+	private static function hash2number( $hex ) {
 		$hex = substr( $hex, 2 ); // to strip 0x;
 		$ret = 0;
 		$len = strlen( $hex );
@@ -87,7 +87,7 @@ class Web3 {
 	 * This will verify Ethereum signed message according to the specification.
 	 * From https://github.com/simplito/elliptic-php#verifying-ethereum-signature
 	 */
-	public static function verify_signature($message, $signature, $address) {
+	public static function verifySignature($message, $signature, $address) {
 		$msglen = strlen( $message );
 		$hash   = Keccak::hash( "\x19Ethereum Signed Message:\n{$msglen}{$message}", 256 );
 		$sign   = [
