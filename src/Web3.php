@@ -61,7 +61,7 @@ class Web3 {
 	public static function generateMessage($address, $nonce, $uri, $statement) {
 		$domain    = parse_url($uri, PHP_URL_HOST);
 		$version   = 1; // Per https://github.com/ethereum/EIPs/blob/9a9c5d0abdaf5ce5c5dd6dc88c6d8db1b130e95b/EIPS/eip-4361.md#example-message-to-be-signed
-		$issued_at = Carbon::now()->format('Y-m-d\TH:i:s\Z');
+		$issuedAt = Carbon::now()->format('Y-m-d\TH:i:s\Z');
 
 		// This is copy-pasted from https://github.com/ethereum/EIPs/blob/9a9c5d0abdaf5ce5c5dd6dc88c6d8db1b130e95b/EIPS/eip-4361.md#informal-message-template
 		$message = "{$domain} wants you to sign in with your Ethereum account:
@@ -72,13 +72,14 @@ class Web3 {
 	URI: {$uri}
 	Version: {$version}
 	Nonce: {$nonce}
-	Issued At: {$issued_at}
+	Issued At: {$issuedAt}
 	";
 
 		return [
 			'address' => $address,
 			'message' => $message,
 			'nonce'   => $nonce,
+            'issued_at' => $issuedAt
         ];
 
 	}
