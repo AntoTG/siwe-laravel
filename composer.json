@@ -6,7 +6,7 @@
     "php": "^8.0.0",
     "kornrunner/keccak": "1.1",
     "nesbot/carbon": "^2.57",
-    "simplito/elliptic-php": "1.0",
+    "simplito/elliptic-php": "1.0.9",
     "symfony/polyfill-mbstring": "1.25.0"
   },
   "autoload": {
